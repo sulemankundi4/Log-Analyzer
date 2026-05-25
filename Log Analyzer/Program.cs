@@ -95,7 +95,6 @@ class Program
             return;
         }
 
-        // ── Route to generator ───────────────────────────
         if (args[0] == "--generate")
         {
             int lines = args.Length > 1 && int.TryParse(args[1], out int n) ? n : 1000;
@@ -115,7 +114,6 @@ class Program
             return;
         }
 
-        // ── Route to analyzer ────────────────────────────
         LogAnalyzer.Analyze(args[0]);
     }
 }

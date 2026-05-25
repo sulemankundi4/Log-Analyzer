@@ -53,7 +53,6 @@ public static class TimestampParser
 
         var parts = line.Trim().Split(' ');
 
-        // ── Try single token first (ISO 8601 or Unix epoch) ──
         if (TimestampParser.TryParse(parts[0], out DateTime ts))
         {
             result.Success = true;

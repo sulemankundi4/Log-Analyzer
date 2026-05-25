@@ -3,19 +3,6 @@ using System.Text.Json;
 
 namespace Log_Analyzer.Script;
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LogGenerator.cs
-// Generates a realistic test log file with all deviations described in the task.
-//
-// Usage:
-//   dotnet run --project LogGenerator              → 1000 lines → test.log
-//   dotnet run --project LogGenerator 5000         → 5000 lines → test.log
-//   dotnet run --project LogGenerator 5000 out.log → 5000 lines → out.log
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-
 public class GeneratorStats
 {
     public int Total { get; set; }
@@ -27,15 +14,9 @@ public class GeneratorStats
     public int SystemMessage { get; set; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Generator
-// ─────────────────────────────────────────────────────────────────────────────
-
 public class LogGenerator
 {
     private readonly Random _rng;
-
-    // ── Data pools ───────────────────────────────────────────────────────────
 
     private static readonly string[] IPs =
     {
@@ -43,7 +24,6 @@ public class LogGenerator
         "192.168.0.100","203.0.113.55","198.51.100.23","10.10.10.10"
     };
 
-    // GET weighted higher — reflects real traffic
     private static readonly string[] Methods =
     {
         "GET","GET","GET","POST","POST","PUT","DELETE","PATCH"
@@ -60,7 +40,6 @@ public class LogGenerator
         "/api/cart",      "/api/checkout"
     };
 
-    // 200 weighted — most requests succeed
     private static readonly int[] StatusCodes =
     {
         200, 200, 200, 200,
@@ -106,10 +85,10 @@ public class LogGenerator
     private static readonly string[] BadJsonLines =
     {
         "{bad json: not valid}}",
-        "{\"timestamp\": \"2024-03-15T14:23:01Z\"",   // unclosed
-        "{\"only_key\": \"no useful fields here\"}",   // missing method + path
-        "{",                                            // totally broken
-        "{}"                                            // empty object
+        "{\"timestamp\": \"2024-03-15T14:23:01Z\"",   
+        "{\"only_key\": \"no useful fields here\"}",   
+        "{",                                           
+        "{}"
     };
 
     public LogGenerator(int seed = 42)
@@ -117,17 +96,11 @@ public class LogGenerator
         _rng = new Random(seed);
     }
 
-    // ── Public entry point ───────────────────────────────────────────────────
-
-
-
     public GeneratorStats Generate(int totalLines, string fileName)
     {
-        // Build Logs/ folder path next to the executable
         string logsFolder = Path.Combine(AppContext.BaseDirectory, "Logs");
         Directory.CreateDirectory(logsFolder);
 
-        // Full output path inside Logs/
         string outputPath = Path.Combine(logsFolder, fileName);
 
         var stats = new GeneratorStats { Total = totalLines };
@@ -141,32 +114,32 @@ public class LogGenerator
             double roll = _rng.NextDouble();
             string line;
 
-            if (roll < 0.03)                    // 3%  blank lines
+            if (roll < 0.03)                   
             {
                 line = _rng.NextDouble() < 0.5 ? "" : "   ";
                 stats.Blank++;
             }
-            else if (roll < 0.05)               // 2%  stack trace lines
+            else if (roll < 0.05)         
             {
                 line = Pick(StackTraceLines);
                 stats.StackTrace++;
             }
-            else if (roll < 0.07)               // 2%  system messages
+            else if (roll < 0.07)            
             {
                 line = Pick(SystemMessages);
                 stats.SystemMessage++;
             }
-            else if (roll < 0.09)               // 2%  bad JSON
+            else if (roll < 0.09)              
             {
                 line = Pick(BadJsonLines);
                 stats.JsonInvalid++;
             }
-            else if (roll < 0.19)               // 10% valid JSON
+            else if (roll < 0.19)            
             {
                 line = MakeJsonLine(currentDt);
                 stats.JsonValid++;
             }
-            else                                // 81% standard lines
+            else                              
             {
                 line = MakeStandardLine(currentDt);
                 stats.Standard++;
@@ -185,7 +158,6 @@ public class LogGenerator
         return stats;
     }
 
-    // ── Standard line builder ────────────────────────────────────────────────
 
     private string MakeStandardLine(DateTime dt)
     {
@@ -198,14 +170,11 @@ public class LogGenerator
 
         string line = $"{ts} {ip} {method} {path} {status} {rt}";
 
-        // ~5% chance of extra user agent field appended
         if (_rng.NextDouble() < 0.05)
             line += $" {Pick(UserAgents)}";
 
         return line;
     }
-
-    // ── JSON line builder — 9 variants ──────────────────────────────────────
 
     private string MakeJsonLine(DateTime dt)
     {
@@ -217,7 +186,6 @@ public class LogGenerator
 
         return _rng.Next(1, 10) switch
         {
-            // Variant 1 — standard keys
             1 => Json(new
             {
                 timestamp = Iso(dt),
@@ -228,7 +196,6 @@ public class LogGenerator
                 response_time_ms = rtMs
             }),
 
-            // Variant 2 — alt keys: time/src/verb/uri/code/ms
             2 => Json(new
             {
                 time = Iso(dt),
@@ -239,7 +206,6 @@ public class LogGenerator
                 ms = rtMs
             }),
 
-            // Variant 3 — epoch seconds timestamp
             3 => Json(new
             {
                 ts = EpochSeconds(dt),
@@ -250,7 +216,6 @@ public class LogGenerator
                 duration_ms = rtMs
             }),
 
-            // Variant 4 — epoch milliseconds timestamp
             4 => Json(new
             {
                 @timestamp = EpochMs(dt),
@@ -261,7 +226,6 @@ public class LogGenerator
                 duration = rtMs
             }),
 
-            // Variant 5 — combined request field "GET /api/users HTTP/1.1"
             5 => Json(new
             {
                 timestamp = Iso(dt),
@@ -271,7 +235,6 @@ public class LogGenerator
                 response_time_ms = rtMs
             }),
 
-            // Variant 6 — response time as string "142ms" or "0.142s"
             6 => Json(new
             {
                 timestamp = Iso(dt),
@@ -284,7 +247,6 @@ public class LogGenerator
                               : $"{rtMs / 1000.0:F3}s"
             }),
 
-            // Variant 7 — extra noise fields (level, logger, msg)
             7 => Json(new
             {
                 timestamp = Iso(dt),
@@ -298,18 +260,16 @@ public class LogGenerator
                 msg = "request handled"
             }),
 
-            // Variant 8 — status as string "200"
             8 => Json(new
             {
                 timestamp = Iso(dt),
                 ip,
                 method,
                 path,
-                status = status.ToString(),   // string not int
+                status = status.ToString(),  
                 response_time_ms = rtMs
             }),
 
-            // Variant 9 — response time in seconds as float
             _ => Json(new
             {
                 datetime = Iso(dt),
@@ -317,44 +277,37 @@ public class LogGenerator
                 verb = method,
                 route = path,
                 response_code = status,
-                elapsed = Math.Round(rtMs / 1000.0, 3)   // seconds
+                elapsed = Math.Round(rtMs / 1000.0, 3) 
             }),
         };
     }
 
-    // ── Timestamp generators — all 4 formats ─────────────────────────────────
 
     private string RandomTimestamp(DateTime dt)
     {
         return _rng.Next(0, 9) switch
         {
-            0 or 1 or 2 => Iso(dt),                              // ISO 8601      (most common)
-            3 or 4 => dt.ToString("yyyy/MM/dd HH:mm:ss"),   // Slash format
-            5 or 6 => dt.ToString("dd-MMM-yyyy HH:mm:ss"),  // Human readable
-            7 => EpochSeconds(dt).ToString(),          // Unix epoch seconds
-            _ => EpochMs(dt).ToString(),               // Unix epoch milliseconds
+            0 or 1 or 2 => Iso(dt),                           
+            3 or 4 => dt.ToString("yyyy/MM/dd HH:mm:ss"),  
+            5 or 6 => dt.ToString("dd-MMM-yyyy HH:mm:ss"), 
+            7 => EpochSeconds(dt).ToString(), 
+            _ => EpochMs(dt).ToString(),        
         };
     }
-
-    // ── Response time — ms / s / bare ────────────────────────────────────────
 
     private string RandomResponseTime()
     {
         int ms = _rng.Next(5, 5000);
         return _rng.Next(0, 4) switch
         {
-            0 or 1 => $"{ms}ms",                        // "142ms"
-            2 => $"{ms / 1000.0:F3}s",             // "0.142s"
-            _ => ms.ToString()                     // "142"  bare number
+            0 or 1 => $"{ms}ms",                     
+            2 => $"{ms / 1000.0:F3}s",           
+            _ => ms.ToString()                   
         };
     }
 
-    // ── Status code — occasionally missing ───────────────────────────────────
-
     private string RandomStatus()
         => _rng.NextDouble() < 0.04 ? "-" : Pick(StatusCodes).ToString();
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private T Pick<T>(T[] array)
         => array[_rng.Next(array.Length)];

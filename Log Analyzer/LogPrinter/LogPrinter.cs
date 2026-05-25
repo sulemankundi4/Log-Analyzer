@@ -39,6 +39,4 @@ public static class LogPrinter
         Console.WriteLine($"║  Malformed Lines : {malformed,-33}║");
         Console.WriteLine("╚═════════════════════════════════════════════════════╝");
     }
-
-    
 }
