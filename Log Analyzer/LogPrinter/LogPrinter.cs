@@ -1,7 +1,7 @@
-﻿using Log_Analyzer;
+﻿using Log_Analyzer.Helpers;
 using Log_Analyzer.Response;
 
-namespace LogAnalyzer;
+namespace Log_Analyzer.LogPrinter;
 
 public static class LogPrinter
 {

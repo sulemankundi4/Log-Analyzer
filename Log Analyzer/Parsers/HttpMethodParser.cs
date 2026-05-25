@@ -1,4 +1,4 @@
-﻿namespace LogAnalyzer;
+﻿namespace Log_Analyzer.Parsers;
 
 public static class HttpMethodParser
 {

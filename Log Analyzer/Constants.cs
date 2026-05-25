@@ -1,4 +1,4 @@
-﻿namespace LogAnalyzer;
+﻿namespace Log_Analyzer;
 
 public static class Constants
 {
@@ -14,4 +14,8 @@ public static class Constants
     {
         "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"
     };
+
+    public const long MillisecondsDivisor = 1_000L;
+    public const long MicrosecondsDivisor = 1_000_000L;
+    public const long NanosecondsDivisor = 1_000_000_000L;
 }

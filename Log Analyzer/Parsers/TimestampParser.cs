@@ -1,6 +1,7 @@
-﻿using System.Globalization;
+﻿using Log_Analyzer.Response;
+using System.Globalization;
 
-namespace LogAnalyzer;
+namespace Log_Analyzer.Parsers;
 
 public static class TimestampParser
 {
@@ -18,10 +19,22 @@ public static class TimestampParser
             return true;
         }
 
-        if (long.TryParse(token, out long epoch) && token.Length is 9 or 10)
+        if (long.TryParse(token, out long epoch))
         {
-            result = DateTimeOffset.FromUnixTimeSeconds(epoch).UtcDateTime;
-            return true;
+            long epochInSeconds = token.Length switch
+            {
+                9 or 10 => epoch,
+                13 => epoch / Constants.MillisecondsDivisor,
+                16 => epoch / Constants.MicrosecondsDivisor,
+                19 => epoch / Constants.NanosecondsDivisor,
+                _ => -1
+            };
+
+            if (epochInSeconds != -1)
+            {
+                result = DateTimeOffset.FromUnixTimeSeconds(epochInSeconds).UtcDateTime;
+                return true;
+            }
         }
 
         return false;

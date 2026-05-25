@@ -1,4 +1,4 @@
-﻿namespace LogAnalyzer;
+﻿namespace Log_Analyzer.Response;
 
 public class TimestampResponseDto
 {

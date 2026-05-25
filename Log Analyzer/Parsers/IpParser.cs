@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace LogAnalyzer;
+namespace Log_Analyzer.Parsers;
 
 public static class IpParser
 {

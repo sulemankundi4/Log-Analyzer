@@ -1,4 +1,4 @@
-﻿namespace Log_Analyzer;
+﻿namespace Log_Analyzer.Helpers;
 
 public static class Helper
 {
