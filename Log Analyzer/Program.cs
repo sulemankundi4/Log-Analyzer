@@ -1,6 +1,7 @@
 ﻿using Log_Analyzer.LogPrinter;
 using Log_Analyzer.Parsers;
 using Log_Analyzer.Response;
+using Log_Analyzer.Script;
 
 namespace LogAnalyzer;
 
@@ -86,17 +87,35 @@ class Program
 {
     static void Main(string[] args)
     {
-        args = new[] { "test.log" };
-
-        if (args.Length < 1)
+        if (args.Length == 0)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[ERROR] No log file path provided.");
-            Console.WriteLine("Usage : LogAnalyzer <path-to-log-file>");
-            Console.ResetColor();
+            Console.WriteLine("[ERROR] No arguments provided.");
+            Console.WriteLine("Usage : dotnet run -- <path-to-log-file>");
+            Console.WriteLine("        dotnet run -- --generate [lineCount] [fileName]");
             return;
         }
 
+        // ── Route to generator ───────────────────────────
+        if (args[0] == "--generate")
+        {
+            int lines = args.Length > 1 && int.TryParse(args[1], out int n) ? n : 1000;
+            string fileName = args.Length > 2 ? args[2] : "test.log";
+
+            var generator = new LogGenerator(seed: 42);
+            var stats = generator.Generate(lines, fileName);
+
+            Console.WriteLine($"  Total lines   : {stats.Total}");
+            Console.WriteLine($"  Standard      : {stats.Standard}");
+            Console.WriteLine($"  JSON valid    : {stats.JsonValid}");
+            Console.WriteLine($"  JSON invalid  : {stats.JsonInvalid}");
+            Console.WriteLine($"  Blank         : {stats.Blank}");
+            Console.WriteLine($"  Stack traces  : {stats.StackTrace}");
+            Console.WriteLine($"  System msgs   : {stats.SystemMessage}");
+            Console.WriteLine($"  Saved to      : {Path.Combine(AppContext.BaseDirectory, "Logs", fileName)}");
+            return;
+        }
+
+        // ── Route to analyzer ────────────────────────────
         LogAnalyzer.Analyze(args[0]);
     }
 }
